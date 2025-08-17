@@ -391,6 +391,7 @@ const indexHtml = `<!DOCTYPE html>
 export async function onRequest({ request, params, env }) {
   const { slug } = params;
   const adminPath = env.ADMIN_PATH;
+  const urlPath = env.URL_PATH;
 
   // Serve admin panel only if the path is set and matches the slug
   if (adminPath && slug === adminPath) {
@@ -400,7 +401,7 @@ export async function onRequest({ request, params, env }) {
   if (!slug || slug === 'favicon.ico') {
     return new Response(siteHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
-  if (!slug || slug === 'coppea') {
+  if (urlPath && slug === urlPath) {
     return new Response(indexHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
