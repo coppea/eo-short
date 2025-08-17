@@ -1,3 +1,260 @@
+const siteHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+    <title>在线工具导航</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; margin: 0; color: #334155; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        *, *::before, *::after { box-sizing: border-box; }
+        .container { max-width: 1280px; margin-left: auto; margin-right: auto; padding: 2rem 1rem; }
+        header { text-align: center; margin-bottom: 2rem; }
+        h1 { font-size: 2.25rem; font-weight: 700; color: #0f766e; margin: 0; }
+        header p { margin-top: 0.5rem; font-size: 1rem; color: #64748b; }
+        main { display: block; }
+        .filter-search-section { margin-bottom: 2rem; }
+        #filter-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+        .search-container { position: relative; max-width: 28rem; margin-left: auto; margin-right: auto; }
+        #search-input { width: 100%; padding: 0.5rem 1rem; font-size: 1rem; border: 1px solid #cbd5e1; border-radius: 9999px; outline: none; transition: all 0.2s; }
+        #search-input:focus { border-color: #14b8a6; box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3); }
+        .search-icon { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: #94a3b8; pointer-events: none; }
+        #tools-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.25rem; }
+        .card { display: block; padding: 1.25rem; background-color: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; text-decoration: none; color: inherit; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .card-content { display: flex; align-items: flex-start; gap: 1rem; }
+        .card-emoji { font-size: 1.875rem; padding-top: 0.25rem; }
+        .card-text-content { flex: 1 1 0%; }
+        .card h3 { font-size: 1.125rem; font-weight: 600; color: #1e293b; margin: 0; }
+        .card p { font-size: 0.875rem; color: #64748b; line-height: 1.625; margin-top: 0.25rem; margin-bottom: 0; }
+        .filter-btn { padding: 0.375rem 1rem; font-size: 0.875rem; font-weight: 500; border-radius: 9999px; background-color: white; border: 1px solid #cbd5e1; color: #475569; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .filter-btn:hover { background-color: #f1f5f9; }
+        .filter-btn.active { background-color: #0d9488; color: white; border-color: #0d9488; }
+        #no-results { text-align: center; font-size: 1.125rem; color: #64748b; padding: 4rem 0; }
+        .hidden { display: none; }
+        footer { text-align: center; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+        footer p { font-size: 0.875rem; color: #64748b; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @media (min-width: 640px) { #tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 768px) { h1 { font-size: 2.25rem; } #tools-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } #filter-container { gap: 0.75rem; } }
+        @media (min-width: 1024px) { #tools-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>在线工具导航</h1>
+            <p>精选实用工具与资源集合</p>
+        </header>
+        <main>
+            <div class="filter-search-section">
+                <div id="filter-container"></div>
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="快速搜索工具...">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+            <div id="tools-grid"></div>
+            <p id="no-results" class="hidden">没有找到匹配的工具。</p>
+        </main>
+        <footer>
+            <p>&copy; 2025 现代化导航</p>
+        </footer>
+    </div>
+    <script>
+        const toolsData = [
+            { name: "IP可用性检测工具", desc: "检测IP和端口在中国大陆以及海外区域的可用性", url: "https://www.toolsdaquan.com/ipcheck/", category: "网络", emoji: "📡" },
+            { name: "我的IP信息", desc: "IP详细信息查询", url: "https://iplark.com/", category: "网络", emoji: "📍" },
+            { name: "谷歌镜像", desc: "谷歌、维基镜像", url: "https://mirror.js.org/", category: "资源", emoji: "🔍" },
+            { name: "流光卡片", desc: "在线分享图片", url: "https://fireflycard.shushiai.com/", category: "媒体", emoji: "🖼️" },
+            { name: "在线笔记", desc: "在线笔记分享生成图片", url: "https://www.ushare.fun/zh-CN/editor", category: "效率", emoji: "📝" },
+            { name: "网络面板", desc: "在线测速延迟", url: "https://net.ljxnet.cn/", category: "网络", emoji: "⚡" },
+            { name: "随机图", desc: "随机图api", url: "https://3650000.xyz/", category: "开发", emoji: "🎲" },
+            { name: "在线处理图片", desc: "转换、拼接、加水印、裁剪、压缩、分割图片等", url: "https://imagestool.com/zh_CN/", category: "媒体", emoji: "🎨" },
+            { name: "聚合工具", desc: "聚合工具箱", url: "https://toolb.cn/", category: "聚合", emoji: "🔧" },
+            { name: "聚合工具2", desc: "聚合工具箱大全", url: "https://tool.juheye.com/", category: "聚合", emoji: "🧰" },
+            { name: "在线工具", desc: "tool万能代码工具", url: "https://tool.lu/", category: "开发", emoji: "💻" },
+            { name: "在线工具2", desc: "万能代码工具2", url: "https://uutool.cn/", category: "开发", emoji: "🛠️" },
+            { name: "运营工具大全", desc: "共收录 16 个分类， 117 个运营工具", url: "https://xiaomark.com/tool", category: "效率", emoji: "📊" },
+            { name: "临时邮箱", desc: "10分钟临时邮箱，包含教育邮箱", url: "https://mail.loli.vet/", category: "安全", emoji: "📧" },
+            { name: "VIP影视解析", desc: "萝卜视频解析支持：优酷、爱奇艺、腾讯等", url: "https://ys.lbbb.cc/", category: "媒体", emoji: "🎬" },
+            { name: "IPTV聚合", desc: "IPTV相关聚合", url: "https://www.iptvindex.com/", category: "媒体", emoji: "📺" },
+            { name: "深言达意｜反向找词", desc: "找词找句成语", url: "https://www.shenyandayi.com", category: "效率", emoji: "📖" },
+            { name: "中文在线打字练习", desc: "提高打字效率", url: "https://dazidazi.com/", category: "效率", emoji: "⌨️" },
+            { name: "英文在线打字练习", desc: "提高打字效率", url: "https://www.eletypes.com/", category: "效率", emoji: "🇬🇧" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('tools-grid');
+            const searchInput = document.getElementById('search-input');
+            const filterContainer = document.getElementById('filter-container');
+            const noResults = document.getElementById('no-results');
+            
+            const categories = ['全部', ...new Set(toolsData.map(tool => tool.category))];
+            
+            function renderTools(filter = '全部', searchTerm = '') {
+                grid.innerHTML = '';
+                const lowerCaseSearchTerm = searchTerm.toLowerCase().trim();
+                
+                const filteredTools = toolsData.filter(tool => {
+                    const matchesCategory = filter === '全部' || tool.category === filter;
+                    const matchesSearch = tool.name.toLowerCase().includes(lowerCaseSearchTerm) || 
+                                          tool.desc.toLowerCase().includes(lowerCaseSearchTerm);
+                    return matchesCategory && matchesSearch;
+                });
+
+                noResults.classList.toggle('hidden', filteredTools.length > 0);
+
+                filteredTools.forEach(tool => {
+                    const card = document.createElement('a');
+                    card.href = tool.url;
+                    card.target = "_blank";
+                    card.rel = "noopener noreferrer";
+                    card.className = "card fade-in";
+                    // Using single quotes for the string makes the inner template literal cleaner.
+                    card.innerHTML = \`<div class="card-content"><div class="card-emoji">\${tool.emoji}</div><div class="card-text-content"><h3 class="card-title">\${tool.name}</h3><p class="card-desc">\${tool.desc}</p></div></div>\`;
+                    grid.appendChild(card);
+                });
+            }
+
+            function renderFilters() {
+                filterContainer.innerHTML = '';
+                categories.forEach(category => {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn';
+                    button.textContent = category;
+                    if (category === '全部') button.classList.add('active');
+                    
+                    button.addEventListener('click', () => {
+                        filterContainer.querySelector('.filter-btn.active').classList.remove('active');
+                        button.classList.add('active');
+                        renderTools(category, searchInput.value);
+                    });
+                    filterContainer.appendChild(button);
+                });
+            }
+
+            searchInput.addEventListener('input', () => {
+                const activeFilter = filterContainer.querySelector('.filter-btn.active').textContent;
+                renderTools(activeFilter, searchInput.value);
+            });
+
+            renderFilters();
+            renderTools();
+        });
+    </script>
+</body>
+</html>
+`;
+
+const adminHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 短链接</title>
+    <style>
+        :root { --bg-color: #111827; --container-bg: #1f2937; --border-color: #4b5563; --text-color: #f3f4f6; --error-color: #f87171; --accent-color: #facc15; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 1rem; }
+        .container { width: 100%; max-width: 900px; margin: auto; background-color: var(--container-bg); border-radius: .75rem; padding: 2rem; }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: .75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .delete-btn { background-color: var(--error-color); color: #fff; border: none; padding: .25rem .75rem; border-radius: .5rem; cursor: pointer; transition: background-color .2s; }
+        .delete-btn:hover { background-color: #ef4444; }
+        a { color: var(--accent-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>管理后台</h1>
+    <p>链接总数: <span id="link-count">0</span></p>
+    <table>
+        <thead>
+            <tr>
+                <th>短链接</th>
+                <th>原始链接</th>
+                <th>访问次数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="links-table-body"></tbody>
+    </table>
+</div>
+<script>
+    const linksTableBody = document.getElementById('links-table-body');
+    const linkCount = document.getElementById('link-count');
+    const adminSlug = window.location.pathname.split('/').pop();
+
+    const authHeaders = {
+        'Content-Type': 'application/json',
+        'X-Admin-Slug': adminSlug
+    };
+
+    async function getLinks() {
+        try {
+            const res = await fetch('/api/links', { headers: authHeaders });
+            if (!res.ok) {
+                if (res.status === 401) {
+                  document.body.innerHTML = '<h1>未授权访问</h1>';
+                }
+                throw new Error('获取链接列表失败。');
+            }
+            const links = await res.json();
+            linkCount.textContent = links.length;
+            renderLinks(links);
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    function renderLinks(links) {
+        linksTableBody.innerHTML = '';
+        links.sort((a, b) => b.visits - a.visits);
+        for (const link of links) {
+            const shortUrl = \`\${window.location.origin}/\${link.slug}\`;
+            const row = document.createElement('tr');
+            row.dataset.slug = link.slug;
+            row.innerHTML = \`
+                <td><a href="\${shortUrl}" target="_blank">\${shortUrl.replace(/^https?:\\/\\//, '')}</a></td>
+                <td><a href="\${link.original}" target="_blank" title="\${link.original}">\${link.original.substring(0, 50) + (link.original.length > 50 ? '...' : '')}</a></td>
+                <td>\${link.visits}</td>
+                                 <td><button class="delete-btn" data-slug="\${link.slug}">删除</button></td>
+            \`;
+            linksTableBody.appendChild(row);
+        }
+    }
+
+    async function deleteLink(slug) {
+        if (!confirm(\`您确定要删除短链接 "\${slug}" 吗？\`)) return;
+        try {
+            const res = await fetch('/api/delete', {
+                method: 'POST',
+                headers: authHeaders,
+                body: JSON.stringify({ slug }),
+            });
+            if (!res.ok) throw new Error('删除失败。');
+            document.querySelector(\`tr[data-slug="\${slug}"]\`).remove();
+            linkCount.textContent = parseInt(linkCount.textContent) - 1;
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+
+    linksTableBody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            deleteLink(e.target.dataset.slug);
+        }
+    });
+
+    getLinks();
+</script>
+</body>
+</html>
+`;
+
 const indexHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -131,113 +388,6 @@ const indexHtml = `<!DOCTYPE html>
 </html>
 `;
 
-const adminHtml = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理后台 - 短链接</title>
-    <style>
-        :root { --bg-color: #111827; --container-bg: #1f2937; --border-color: #4b5563; --text-color: #f3f4f6; --error-color: #f87171; --accent-color: #facc15; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 1rem; }
-        .container { width: 100%; max-width: 900px; margin: auto; background-color: var(--container-bg); border-radius: .75rem; padding: 2rem; }
-        h1 { text-align: center; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: .75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .delete-btn { background-color: var(--error-color); color: #fff; border: none; padding: .25rem .75rem; border-radius: .5rem; cursor: pointer; transition: background-color .2s; }
-        .delete-btn:hover { background-color: #ef4444; }
-        a { color: var(--accent-color); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>管理后台</h1>
-    <p>链接总数: <span id="link-count">0</span></p>
-    <table>
-        <thead>
-            <tr>
-                <th>短链接</th>
-                <th>原始链接</th>
-                <th>访问次数</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="links-table-body"></tbody>
-    </table>
-</div>
-<script>
-    const linksTableBody = document.getElementById('links-table-body');
-    const linkCount = document.getElementById('link-count');
-    const adminSlug = window.location.pathname.split('/').pop();
-
-    const authHeaders = {
-        'Content-Type': 'application/json',
-        'X-Admin-Slug': adminSlug
-    };
-
-    async function getLinks() {
-        try {
-            const res = await fetch('/api/links', { headers: authHeaders });
-            if (!res.ok) {
-                if (res.status === 401) {
-                  document.body.innerHTML = '<h1>未授权访问</h1>';
-                }
-                throw new Error('获取链接列表失败。');
-            }
-            const links = await res.json();
-            linkCount.textContent = links.length;
-            renderLinks(links);
-        } catch(err) {
-            console.error(err);
-        }
-    }
-
-    function renderLinks(links) {
-        linksTableBody.innerHTML = '';
-        links.sort((a, b) => b.visits - a.visits);
-        for (const link of links) {
-            const shortUrl = \`\${window.location.origin}/\${link.slug}\`;
-            const row = document.createElement('tr');
-            row.dataset.slug = link.slug;
-            row.innerHTML = \`
-                <td><a href="\${shortUrl}" target="_blank">\${shortUrl.replace(/^https?:\\/\\//, '')}</a></td>
-                <td><a href="\${link.original}" target="_blank" title="\${link.original}">\${link.original.substring(0, 50) + (link.original.length > 50 ? '...' : '')}</a></td>
-                <td>\${link.visits}</td>
-                                 <td><button class="delete-btn" data-slug="\${link.slug}">删除</button></td>
-            \`;
-            linksTableBody.appendChild(row);
-        }
-    }
-
-    async function deleteLink(slug) {
-        if (!confirm(\`您确定要删除短链接 "\${slug}" 吗？\`)) return;
-        try {
-            const res = await fetch('/api/delete', {
-                method: 'POST',
-                headers: authHeaders,
-                body: JSON.stringify({ slug }),
-            });
-            if (!res.ok) throw new Error('删除失败。');
-            document.querySelector(\`tr[data-slug="\${slug}"]\`).remove();
-            linkCount.textContent = parseInt(linkCount.textContent) - 1;
-        } catch (err) {
-            alert(err.message);
-        }
-    }
-
-    linksTableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            deleteLink(e.target.dataset.slug);
-        }
-    });
-
-    getLinks();
-</script>
-</body>
-</html>
-`;
-
 export async function onRequest({ request, params, env }) {
   const { slug } = params;
   const adminPath = env.ADMIN_PATH;
@@ -249,6 +399,9 @@ export async function onRequest({ request, params, env }) {
 
   if (!slug || slug === 'favicon.ico') {
     return new Response(indexHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+    if (!slug || slug === coppea) {
+    return new Response(siteHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
   try {
