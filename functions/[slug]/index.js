@@ -400,7 +400,7 @@ export async function onRequest({ request, params, env }) {
   if (!slug || slug === 'favicon.ico') {
     return new Response(siteHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
-    if (!slug || slug === coppea) {
+  if (!slug || slug === 'coppea') {
     return new Response(indexHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
